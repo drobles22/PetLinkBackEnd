@@ -118,9 +118,9 @@ router.get("/timeline/:userId", async (req, res) => {
 
   //post del perfil
 
-  router.get("/profile/:name", async (req, res) => {
+  router.get("/profile/:username", async (req, res) => {
     try {
-      const user = await User.findOne({ name: req.params.name    });
+      const user = await User.findOne({ username: req.params.username    });
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
@@ -130,6 +130,22 @@ router.get("/timeline/:userId", async (req, res) => {
       res.status(500).json(err);
     }
   });
+// contar cantidad de publicaciones de usuario
+  router.get("/posts/count", async (req, res) => {
+    const username = req.query.username; // Filtrar por username
+  
+    try {
+      const user = await User.findOne({ username: username }); // Busca el usuario por su username
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      const postCount = await Post.countDocuments({ userId: user._id }); // Cuenta las publicaciones asociadas al userId
+      res.status(200).json({ postCount });
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  })
   
 
 
