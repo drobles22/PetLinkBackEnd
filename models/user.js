@@ -18,9 +18,9 @@ const UserSchema = new mongoose.Schema({
       },
       lastName: {
         type: String,
-        require: true,
         min: 3,
         max: 20,
+        default:""
       },
       email: {
         type: String,
@@ -51,15 +51,18 @@ const UserSchema = new mongoose.Schema({
       },
       descr: {
         type: String,
+        default:"",
         max: 50,
       },
       city: {
         type: String,
         max: 50,
+        default:""
       },
       country: {
         type: String,
         max: 50,
+        default:""
       },
       itsBan:{
         type:Boolean,

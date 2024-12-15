@@ -19,7 +19,6 @@ router.post("/register",async(req,res)=>{
         email: req.body.email,
         password: hashedPassword,
         name:req.body.name,
-        lastName:req.body.lastName,
         itsBan:false
       });
 
