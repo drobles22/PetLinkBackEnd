@@ -132,7 +132,7 @@ router.get("/timeline/:userId", async (req, res) => {
   });
 // contar cantidad de publicaciones de usuario
   router.get("/posts/count", async (req, res) => {
-    const username = req.query.username; // Filtrar por username
+    const username = req.query.username; 
   
     try {
       const user = await User.findOne({ username: username }); // Busca el usuario por su username
@@ -146,6 +146,46 @@ router.get("/timeline/:userId", async (req, res) => {
       res.status(500).json(err);
     }
   })
+
+  // Agregar un comentario a un post
+  router.put("/:id/comment", async (req, res) => {
+    try {
+      // Buscar el post por ID
+      const post = await Post.findById(req.params.id);
+      if (!post) {
+        return res.status(404).json({ message: "Post no encontrado" });
+      }
+  
+      // Crear el nuevo comentario
+      const comentario = {
+        userId: req.body.userId,
+        comentario: req.body.comentario,
+      };
+    
+      // Actualizar el array de comentarios
+      await post.updateOne({ $push: { comentarios: comentario } });
+  
+      res.status(200).json({ message: "Comentario agregado", comentario });
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  });
+
+// Obtener todos los comentarios de un post
+router.get("/:id/comments", async (req, res) => {
+  try {
+    // Buscar el post por su ID
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ message: "Post no encontrado" });
+    }
+
+    // Devolver el array de comentarios
+    res.status(200).json(post.comentarios);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
   
 
 

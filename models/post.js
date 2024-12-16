@@ -21,7 +21,24 @@ const PostSchema = new mongoose.Schema({
       shares:{
         type:Array,
         default:[]
-      }
+      },
+      comentarios: [
+        {
+          userId: {
+            type: String,
+            required: true,
+          },
+          comentario: {
+            type: String,
+            required: true,
+            max: 300,
+          },
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+        },
+      ],
     },
     { timestamps: true }
 
