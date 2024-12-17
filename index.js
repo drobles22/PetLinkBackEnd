@@ -5,48 +5,56 @@ const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const multer = require("multer");
-const userRoute = require("./routes/users");
-const postRoute = require("./routes/posts");
-const authRoute = require("./routes/auth");
 const path = require("path");
+const cors = require("cors");
+
+const userRoute = require("./routes/users");
+const authRoute = require("./routes/auth");
+const postRoute = require("./routes/posts");
 
 dotenv.config();
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("Connected to MongoDB");
-  } catch (err) {
-    console.error("Error connecting to MongoDB:", err.message);
-    process.exit(1);
-  }
-};
-connectDB();
-
-app.use("/images", express.static(path.join(__dirname, "public/images")));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("Conectado a MongoDB");
+  })
+  .catch((err) => console.error("Error conectando a MongoDB:", err));
 
 // Middleware
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
+app.use(cors());
 
-// File upload
+app.use("/images", express.static(path.join(__dirname, "public/images")));
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/images");
   },
   filename: (req, file, cb) => {
-    cb(null, req.body.name);
+    const uniqueName = Date.now() + "_" + file.originalname;
+    cb(null, uniqueName);
   },
 });
-
 const upload = multer({ storage: storage });
-app.post("/api/upload", upload.single("file"), (req, res) => {
+
+app.post("/", upload.single("file"), (req, res) => {
   try {
-    return res.status(200).json("File uploaded successfully");
+    const { desc } = req.body;
+    const img = req.file ? req.file.filename : null;
+
+    const newPost = {
+      desc,
+      img,
+      createdAt: new Date(),
+    };
+
+    console.log("Nuevo post creado:", newPost);
+    res.status(200).json(newPost);
   } catch (error) {
-    console.error(error);
-    res.status(500).json("Error uploading file");
+    console.error("Error creando el post:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
@@ -55,7 +63,11 @@ app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/posts", postRoute);
 
-app.listen(8800, () => {
-  console.log("Backend server is running on port 8800!");
+app.get("/", (req, res) => {
+  res.send("Welcome");
+});
+
+app.listen(process.env.PORT || 8800, () => {
+  console.log("Backend server is running!");
 });
 
