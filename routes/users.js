@@ -83,6 +83,40 @@ router.get("/", async (req, res) => {
   }
 });
 
+
+//get Users por filtros
+router.get("/searchUsers", async (req, res) => {
+  const username = req.query.username;
+
+  try {
+    if (!username) {
+      return res.status(400).json({ message: "El parámetro 'username' es requerido" });
+    }
+
+    // Buscar usuarios que coincidan parcialmente con el 'username'
+    const users = await User.find({
+      username: { $regex: username, $options: "i" }, // Insensible a mayúsculas
+    });
+
+    if (users.length === 0) {
+      return res.status(404).json({ message: "No se encontraron usuarios" });
+    }
+
+    // Eliminar el campo de contraseña antes de devolver los resultados
+    const result = users.map(user => {
+      const { password, updatedAt, ...other } = user._doc;
+      return other;
+    });
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("Error al buscar usuarios:", err);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+});
+
+
+
 //follows
 router.put("/:id/follow", async (req, res) => {
     if (req.body.userId !== req.params.id) {
