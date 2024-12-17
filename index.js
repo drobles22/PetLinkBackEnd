@@ -4,44 +4,58 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const cors = require("cors");
-
-
+const multer = require("multer");
 const userRoute = require("./routes/users");
-const authRoute = require("./routes/auth");
 const postRoute = require("./routes/posts");
-
-
-
+const authRoute = require("./routes/auth");
+const path = require("path");
 
 dotenv.config();
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('Conectado a MongoDB');
-  })
-  .catch(err => console.error('Error conectando a MongoDB:', err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Connected to MongoDB");
+  } catch (err) {
+    console.error("Error connecting to MongoDB:", err.message);
+    process.exit(1);
+  }
+};
+connectDB();
 
+app.use("/images", express.static(path.join(__dirname, "public/images")));
+
+// Middleware
 app.use(express.json());
 app.use(helmet());
-app.use(cors());
+app.use(morgan("common"));
 
+// File upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "public/images");
+  },
+  filename: (req, file, cb) => {
+    cb(null, req.body.name);
+  },
+});
 
+const upload = multer({ storage: storage });
+app.post("/api/upload", upload.single("file"), (req, res) => {
+  try {
+    return res.status(200).json("File uploaded successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).json("Error uploading file");
+  }
+});
 
-app.get("/",(req,res)=>{
-res.send("Welcome")
-
-})
-
-app.use("/api/posts", postRoute);
-app.use("/api/users", userRoute);
+// Routes
 app.use("/api/auth", authRoute);
-
-
-
-
+app.use("/api/users", userRoute);
+app.use("/api/posts", postRoute);
 
 app.listen(8800, () => {
-  console.log("servidor corriendo");
+  console.log("Backend server is running on port 8800!");
 });
+
