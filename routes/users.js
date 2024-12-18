@@ -2,7 +2,8 @@ const { get } = require("mongoose");
 const User = require("../models/user");
 const router = require("express").Router();
 const bcrypt = require("bcrypt")
-
+const multer = require("multer");
+const path = require("path");
 
 //update
 router.put("/:id",async (req,res)=>{
@@ -124,8 +125,19 @@ router.put("/:id/follow", async (req, res) => {
     } else {
       res.status(403).json("you cant unfollow yourself");
     }
+
   });
 
-  
+  router.get("/searchUsers", async (req, res) => {
+    const username = req.query.username;
+    try {
+      const users = await User.find({ username: new RegExp(username, "i") });
+      res.status(200).json(users);
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  }
+);
+
 
 module.exports = router;
