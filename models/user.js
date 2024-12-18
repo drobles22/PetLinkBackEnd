@@ -68,6 +68,10 @@ const UserSchema = new mongoose.Schema({
         type:Boolean,
         default:false
       },
+      itsPrivate:{
+        type:Boolean,
+        default:false
+      },
       relationship: {
         type: Number,
         enum: [1, 2, 3],
