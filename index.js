@@ -11,7 +11,6 @@ const authRoute = require("./routes/auth");
 const path = require("path");
 const cors = require('cors');
 
-
 dotenv.config();
 
 const connectDB = async () => {
@@ -27,13 +26,12 @@ connectDB();
 
 app.use("/images", express.static(path.join(__dirname, "public/images")));
 
-// Middleware
 app.use(express.json());
 app.use(cors())
 app.use(helmet());
 app.use(morgan("common"));
 
-// File upload
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/images");
