@@ -5,60 +5,56 @@ const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const multer = require("multer");
+const userRoute = require("./routes/users");
+const postRoute = require("./routes/posts");
+const authRoute = require("./routes/auth");
 const path = require("path");
 
-// Configurar variables de entorno
 dotenv.config();
 
-// Conexión a MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("Conectado a MongoDB"))
-  .catch((err) => console.error("Error conectando a MongoDB:", err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("Connected to MongoDB");
+  } catch (err) {
+    console.error("Error connecting to MongoDB:", err.message);
+    process.exit(1);
+  }
+};
+connectDB();
+
+app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 // Middleware
-app.use("/images", express.static(path.join(__dirname, "public/images")));
 app.use(express.json());
 app.use(helmet());
 app.use(morgan("common"));
 
-// Configuración de Multer para subir archivos
+// File upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/images"); // Guardar en la carpeta "public/images"
+    cb(null, "public/images");
   },
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + path.extname(file.originalname);
-    cb(null, uniqueName); // Asignar un nombre único al archivo
+    cb(null, req.body.name);
   },
 });
 
-const upload = multer({ storage });
-
-// Endpoint para subir archivos
+const upload = multer({ storage: storage });
 app.post("/api/upload", upload.single("file"), (req, res) => {
   try {
-    res.status(200).json({
-      message: "Archivo subido correctamente",
-      fileName: req.file.filename,
-    });
+    return res.status(200).json("File uploaded successfully");
   } catch (error) {
-    console.error("Error al subir el archivo:", error);
-    res.status(500).json({ error: "Error al subir el archivo" });
+    console.error(error);
+    res.status(500).json("Error uploading file");
   }
 });
 
-// Rutas
-const userRoute = require("./routes/users");
-const authRoute = require("./routes/auth");
-const postRoute = require("./routes/posts");
-
+// Routes
 app.use("/api/auth", authRoute);
 app.use("/api/users", userRoute);
 app.use("/api/posts", postRoute);
 
-// Servidor
-const PORT = process.env.PORT || 8800;
-app.listen(PORT, () => {
-  console.log(`Backend corriendo en el puerto ${PORT}`);
+app.listen(8800, () => {
+  console.log("Backend server is running on port 8800!");
 });
