@@ -72,6 +72,10 @@ const UserSchema = new mongoose.Schema({
         type:Boolean,
         default:false
       },
+      resetToken: {
+        type: String, 
+        default: "",
+      },
       relationship: {
         type: Number,
         enum: [1, 2, 3],

@@ -1,6 +1,11 @@
 const { get } = require("mongoose");
 const router = require("express").Router();
 const bcrypt = require("bcrypt")
+const jwt = require('jsonwebtoken');
+const { expressjwt: jwtMiddleware } = require('express-jwt');
+const nodemailer = require("nodemailer"); // Librería para enviar correos
+
+
 
 const User = require("../models/user")
 
@@ -47,6 +52,80 @@ router.post("/login", async (req, res) => {
     res.status(500).json(err)
   }
 });
+
+
+//solicitud de reinicio de contraseña
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "El correo no existe" });
+    }
+
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    user.resetToken = resetToken;
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS, 
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: "Solicitud de reinicio de contraseña",
+      text: `Hola, haz solicitado un reinicio de contraseña para PetLink, haz clic en el siguiente enlace para reiniciar tu contraseña: 
+      http://localhost:8800/api/auth/reset-password?token=${resetToken}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        return res.status(500).json({ message: "Error al enviar el correo de reinicio." });
+      }
+      res.json({ message: "Correo de reinicio enviado." });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Hubo un problema al procesar la solicitud." });
+  }
+});
+
+
+// Resetear la contraseña
+router.post("/reset-password", async (req, res) => {
+  const { resetToken, newPassword } = req.body;
+
+  try {
+
+    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user || user.resetToken !== resetToken) {
+      return res.status(400).json({ message: "Token inválido o expirado." });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+ 
+    user.password = hashedPassword;
+    user.resetToken = undefined;  
+    await user.save();
+
+    res.json({ message: "Contraseña cambiada exitosamente." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Hubo un error al reiniciar la contraseña." });
+  }
+});
+
 
 
 module.exports = router;

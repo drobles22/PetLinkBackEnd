@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const multer = require("multer");
+const jwt = require('jsonwebtoken');
 const userRoute = require("./routes/users");
 const postRoute = require("./routes/posts");
 const authRoute = require("./routes/auth");
@@ -27,9 +28,12 @@ connectDB();
 app.use("/images", express.static(path.join(__dirname, "public/images")));
 
 app.use(express.json());
+require('dotenv').config();
 app.use(cors())
 app.use(helmet());
 app.use(morgan("common"));
+
+
 
 
 const storage = multer.diskStorage({
