@@ -3,7 +3,7 @@ const router = require("express").Router();
 const bcrypt = require("bcrypt")
 const jwt = require('jsonwebtoken');
 const { expressjwt: jwtMiddleware } = require('express-jwt');
-const nodemailer = require("nodemailer"); // Librería para enviar correos
+const nodemailer = require("nodemailer"); 
 
 
 
@@ -54,10 +54,13 @@ router.post("/login", async (req, res) => {
 });
 
 
-//solicitud de reinicio de contraseña
-router.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
 
+
+//solicitud de reinicio de contraseña
+router.post("/forgotPassword", async (req, res) => {
+  console.log("Solicitud a /forgotPassword recibida");
+  const { email } = req.body;
+  console.log("Correo recibido:", email);  
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -72,8 +75,8 @@ router.post("/forgot-password", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS, 
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
@@ -85,12 +88,15 @@ router.post("/forgot-password", async (req, res) => {
       http://localhost:8800/api/auth/reset-password?token=${resetToken}`,
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        return res.status(500).json({ message: "Error al enviar el correo de reinicio." });
-      }
-      res.json({ message: "Correo de reinicio enviado." });
-    });
+    console.log("Configuración del transporte: ", mailOptions);  
+transporter.sendMail(mailOptions, (error, info) => {
+  if (error) {
+    console.error("Error al enviar el correo:", error);  
+    return res.status(500).json({ message: "Error al enviar el correo de reinicio." });
+  }
+  console.log("Correo enviado:", info);
+  res.json({ message: "Correo de reinicio enviado." });
+});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Hubo un problema al procesar la solicitud." });
@@ -99,7 +105,7 @@ router.post("/forgot-password", async (req, res) => {
 
 
 // Resetear la contraseña
-router.post("/reset-password", async (req, res) => {
+router.post("/resetPassword", async (req, res) => {
   const { resetToken, newPassword } = req.body;
 
   try {
